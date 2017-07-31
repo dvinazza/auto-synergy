@@ -59,4 +59,3 @@ send "exit\r"
 EOF
     return $?
 }
-
