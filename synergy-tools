@@ -1,0 +1,62 @@
+#!/bin/bash 
+
+TOOLS_DIR=$(dirname $(realpath $BASH_SOURCE))
+configs=$TOOLS_DIR/known_networks
+
+# Fix: En debian sbin no está en el path del usuario
+if ! which arp &> /dev/null; then
+  alias arp=/usr/sbin/arp
+fi
+
+findCurrentNetwork() {  # Me fijo si tengo una configuracion para la red actual
+  current=$(ip route show | grep `hostname -I | cut -f1 -d' '` | cut -f1 -d' ')
+  
+  for config in `ls $configs`; do
+    if grep -q $current $configs/$config; then
+      source $configs/$config
+      return 0
+    fi
+  done
+
+  return 1
+}
+
+updateConfig() {
+  if findCurrentNetwork; then
+    if testSynergy $1; then
+	    sed -i $network_config -e "s/$server_ip/$1/g"
+	    return $?
+    fi
+  fi
+  return 1
+}
+
+findIPfromMAC() {
+    ip=$(arpFindIp $2)
+    if [ "$ip" != "" ]; then
+        echo $ip
+    else
+        nmap -sP $1 &>/dev/null #escaneo la red para juntar mac address
+        arpFindIp $2
+    fi
+}
+
+arpFindIp() {
+  arp -a | grep $1 | grep -oP '\(\K[\d|\.]*'
+}
+
+testSynergy() { #me fijo si la ip esta encendida y escuchando
+    ping $1 -c 1 &>/dev/null 
+    if [ $? -ne 0 ]; then
+        return 1
+    fi
+
+    expect << EOF
+log_user 0
+spawn telnet $1 24800
+expect -re "Synergy"
+send "exit\r"
+EOF
+    return $?
+}
+
