@@ -7,3 +7,7 @@ Script to start a Synergy Client automatically
 Clone this repo
 Create a configuration in known_networks dir
 Edit 90synergy accordingly
+Copy it to /etc/NetworkManager/dispatcher.d/
+Change owner/mask
+Enjoy
+
