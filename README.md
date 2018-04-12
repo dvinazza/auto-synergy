@@ -6,6 +6,7 @@ Script to start a Synergy Client automatically
 
 nmap
 synergyc
+telnet
 expect 
 
 ## Install & Configure

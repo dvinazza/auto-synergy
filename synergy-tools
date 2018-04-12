@@ -42,10 +42,14 @@ arpFindIp() {
 }
 
 testSynergy() { #me fijo si la ip esta encendida y escuchando
-    ping $1 -c 1 &>/dev/null 
-    if [ $? -ne 0 ]; then
+    
+    if ! ping $1 -c 1 &>/dev/null; then
         return 1
-    fi
+    fi  # IP answers ICMP
+
+    if ! nc -z $1 24800 &>/dev/null; then
+        return 1
+    fi  # Port is OPEN
 
     expect << EOF
 log_user 0
