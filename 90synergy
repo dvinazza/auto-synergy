@@ -11,8 +11,13 @@ if [ "$2" != "up" ]; then
   exit 0  # nada que hacer
 fi
 
+# https://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
+# Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
+log_file=/var/log/auto-synergy.log
+exec > >(tee -i $log_file)
+exec 2>&1
+
 # Me aseguro de que haya iniciado sesion antes de correr el helper
 while ! isLoggedIn $user; do
-	echo .
 	sleep 10
 done && runuser -l $user -c "DISPLAY=:0; $auto_synergy_git/helper.sh" &
