@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash
 
 debug_level="DEBUG"
 script_dir=$(dirname $(realpath $0))

@@ -17,8 +17,11 @@ findCurrentNetwork() {  # Me fijo si tengo una configuracion para la red actual
 }
 
 updateConfig() {
+  # echo "${FUNCNAME[0]}: Actualizando configuración con ip [$1]"
   if findCurrentNetwork; then
+    # echo "${FUNCNAME[0]}: Archivo de configuración [$network_config]"
     if testSynergy $1; then
+    	    # echo "${FUNCNAME[0]}: IP con synergy activo [$server_ip]"
 	    sed -i $network_config -e "s/$server_ip/$1/g"
 	    return $?
     fi
@@ -31,7 +34,7 @@ findIPfromMAC() {
     if [ "$ip" != "" ]; then
         echo $ip
     else
-        nmap -sP $1 &>/dev/null #escaneo la red para juntar mac address
+	nmap -sP $1 &>/dev/null #escaneo la red para juntar mac address
         arpFindIp $2
     fi
 }
