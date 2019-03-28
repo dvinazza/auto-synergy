@@ -22,8 +22,9 @@ Script to start a Synergy Client automatically
 
 ## TODO
 
-* [ ] Buscar una forma más elegante de obtener la red actual (ver función findCurrentNetwork)
-* [ ] Homogeneizar los nombres de las funciones con un sufijo (synergy-?)
-* [ ] Comprobar que las aplicaciones necesarias existan
-* [ ] Script para instalar automáticamente
+* [ ] Buscar una forma más elegante de obtener la red actual (ver función autosyn-network-getCurrent)
+* [x] Homogeneizar los nombres de las funciones con un sufijo (autosyn-*)
+* [x] Script para instalar automáticamente
+  * [x] Comprobar que las aplicaciones necesarias existan
+  * [ ] Comprobar que el gestor de redes sea NetworkManager
 * [ ] Script para agregar redes

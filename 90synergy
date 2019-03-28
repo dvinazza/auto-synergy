@@ -1,7 +1,8 @@
 #!/bin/bash 
 
-user=wozhub
-auto_synergy_git=/home/$user/git/auto-synergy
+USER=wozhub
+AUTO_SYNERGY_GIT=/home/$user/git/auto-synergy
+LOG_FILE=/var/log/auto-synergy.log
 
 isLoggedIn() {
   w -s -h | grep -q $1
@@ -13,11 +14,10 @@ fi
 
 # https://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
-log_file=/var/log/auto-synergy.log
 exec > >(tee -i $log_file)
 exec 2>&1
 
 # Me aseguro de que haya iniciado sesion antes de correr el helper
-while ! isLoggedIn $user; do
+while ! isLoggedIn ${USER}; do
 	sleep 10
-done && runuser -l $user -c "DISPLAY=:0; $auto_synergy_git/helper.sh" &
+done && runuser -l ${USER} -c "DISPLAY=$(ps e -u ${USER} | sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | sort -u | head -1); ${AUTO_SYNERGY_GIT}/helper.sh" &

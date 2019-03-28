@@ -3,7 +3,7 @@
 TOOLS_DIR=$(dirname $(realpath $BASH_SOURCE))
 configs=$TOOLS_DIR/known_networks
 
-findCurrentNetwork() {  # Me fijo si tengo una configuracion para la red actual
+autosyn-network-getCurrent() {  # Me fijo si tengo una configuracion para la red actual
   current=$(ip route show | grep `hostname -I | cut -f1 -d' '` | cut -f1 -d' ')
   
   for config in `ls $configs`; do
@@ -16,11 +16,11 @@ findCurrentNetwork() {  # Me fijo si tengo una configuracion para la red actual
   return 1
 }
 
-updateConfig() {
+autosyn-config-update() {
   # echo "${FUNCNAME[0]}: Actualizando configuración con ip [$1]"
-  if findCurrentNetwork; then
+  if autosyn-network-getCurrent; then
     # echo "${FUNCNAME[0]}: Archivo de configuración [$network_config]"
-    if testSynergy $1; then
+    if autosyn-host-test $1; then
     	    # echo "${FUNCNAME[0]}: IP con synergy activo [$server_ip]"
 	    sed -i $network_config -e "s/$server_ip/$1/g"
 	    return $?
@@ -29,22 +29,22 @@ updateConfig() {
   return 1
 }
 
-findIPfromMAC() {
-    ip=$(arpFindIp $2)
+autosyn-mac2ip() {
+    ip=$(autosyn-arp-getIp $2)
     if [ "$ip" != "" ]; then
         echo $ip
     else
 	nmap -sP $1 &>/dev/null #escaneo la red para juntar mac address
-        arpFindIp $2
+        autosyn-arp-getIp $2
     fi
 }
 
-arpFindIp() {
+autosyn-arp-getIp() {
   #arp -a | grep $1 | grep -oP '\(\K[\d|\.]*'
   ip n | grep $1 | awk '{print $1}'
 }
 
-testSynergy() { #me fijo si la ip esta encendida y escuchando
+autosyn-host-test() { #me fijo si la ip esta encendida y escuchando
     
     if ! ping $1 -c 1 &>/dev/null; then
         return 1
@@ -61,4 +61,14 @@ expect -re "Synergy"
 send "exit\r"
 EOF
     return $?
+}
+
+autosyn-host-connect() {
+    # https://askubuntu.com/questions/90234/wrong-keyboard-layout-on-client-pc-when-using-synergy
+    . /etc/default/keyboard
+    /usr/bin/synergyc --debug $debug_level --log /tmp/synergy $1
+    DISPLAY=:0 setxkbmap $XKBLAYOUT \
+        -option "$XKBOPTIONS" \
+        -model "$XKBMODEL" \
+        -variant "$XKBVARIANT"
 }
