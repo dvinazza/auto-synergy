@@ -2,13 +2,14 @@
 
 TOOLS_DIR=$(dirname $(realpath $BASH_SOURCE))
 AUTOSYN_CONF_DIR=$TOOLS_DIR/known_networks
+AUTOSYN_LOG_FILE=/tmp/autosyn.log
 
 autosyn-network-getCurrent() {  # Me fijo si tengo una configuracion para la red actual
   current=$(ip route show | grep `hostname -I | cut -f1 -d' '` | cut -f1 -d' ')
   
-  for config in `ls $AUTOSYN_CONF_DIR`; do
-    if grep -q $current $AUTOSYN_CONF_DIR/$config; then
-      source $AUTOSYN_CONF_DIR/$config
+  for AUTOSYN_CONF_FILE in `ls $AUTOSYN_CONF_DIR`; do
+    if grep -q $current $AUTOSYN_CONF_DIR/${AUTOSYN_CONF_FILE}; then
+      source $AUTOSYN_CONF_DIR/${AUTOSYN_CONF_FILE}
       return 0
     fi
   done
@@ -64,11 +65,18 @@ EOF
 }
 
 autosyn-host-connect() {
+    local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
+
     # https://askubuntu.com/questions/90234/wrong-keyboard-layout-on-client-pc-when-using-synergy
     . /etc/default/keyboard
-    /usr/bin/synergyc --debug $debug_level --log /tmp/synergy $1
-    DISPLAY=:0 setxkbmap $XKBLAYOUT \
-        -option "$XKBOPTIONS" \
-        -model "$XKBMODEL" \
+    /usr/bin/synergyc --debug $AUTOSYN_DEBUG_LEVEL --log ${AUTOSYN_LOG_FILE} ${AUTOSYN_SERVER_IP}
+    setxkbmap $XKBLAYOUT -option "$XKBOPTIONS" -model "$XKBMODEL" \
         -variant "$XKBVARIANT"
+}
+
+autosyn-server-start() {
+    [ -f ${AUTOSYN_NET_CONFIG}.conf ] || echo "${AUTOSYN_NET_CONFIG}.conf not found"
+
+    /usr/bin/synergys --debug ${AUTOSYN_DEBUG_LEVEL} --log ${AUTOSYN_LOG_FILE} \
+        --config ${AUTOSYN_NET_CONFIG}.conf
 }

@@ -1,6 +1,6 @@
 #!/bin/bash -x
 
-debug_level="DEBUG"
+AUTOSYN_DEBUG_LEVEL="DEBUG"
 script_dir=$(dirname $(realpath $0))
 source $script_dir/synergy-tools
 
@@ -12,19 +12,27 @@ if [ "$(pidof synergy)" != "" ] || [ "$(pidof synergyc)" != "" ]; then
 fi
 
 if autosyn-network-getCurrent; then
-  echo "Conozco la red: $AUTOSYN_NET_NAME"
-  if autosyn-host-test $AUTOSYN_SERVER_IP; then
-    echo "El ip conocido esta activo: $AUTOSYN_SERVER_IP"
-    autosyn-host-connect $AUTOSYN_SERVER_IP
-  else
-    echo "No pude conectarme a la IP que esperaba ($AUTOSYN_SERVER_IP)"
-    
-    echo "Intentando encontrarla mediante nmap/arp..."
-    ip=$(autosyn-mac2ip $AUTOSYN_NET $AUTOSYN_SERVER_MAC)
-    
-    echo "Encontre: $ip"
-    if autosyn-config-update $ip; then
-        autosyn-host-connect $ip
-    fi
-  fi
+  echo "Conozco la red: $AUTOSYN_NET_NAME [AUTOSYN_MODE=$AUTOSYN_MODE]"
+
+  case $AUTOSYN_MODE in
+        server)
+            autosyn-server-start
+            ;;
+        *)
+            if autosyn-host-test $AUTOSYN_SERVER_IP; then
+                echo "El ip conocido esta activo: $AUTOSYN_SERVER_IP"
+                autosyn-host-connect $AUTOSYN_SERVER_IP
+            else
+                echo "No pude conectarme a la IP que esperaba ($AUTOSYN_SERVER_IP)"
+
+                echo "Intentando encontrarla mediante nmap/arp..."
+                ip=$(autosyn-mac2ip $AUTOSYN_NET $AUTOSYN_SERVER_MAC)
+
+                echo "Encontre: $ip"
+                if autosyn-config-update $ip; then
+                    autosyn-host-connect $ip
+                fi
+            fi
+            ;;
+    esac
 fi
