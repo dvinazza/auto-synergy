@@ -21,8 +21,8 @@ autosyn-config-update() {
   # echo "${FUNCNAME[0]}: Actualizando configuración con ip [$1]"
   if autosyn-network-getCurrent; then
     # echo "${FUNCNAME[0]}: Archivo de configuración [$AUTOSYN_NET_CONFIG]"
-    if autosyn-server-test $1; then
-    	    # echo "${FUNCNAME[0]}: IP con synergy activo [$AUTOSYN_SERVER_IP]"
+    if autosyn-client-test $1; then
+   	    # echo "${FUNCNAME[0]}: IP con synergy activo [$AUTOSYN_SERVER_IP]"
 	    sed -i $AUTOSYN_NET_CONFIG -e "s/$AUTOSYN_SERVER_IP/$1/g"
 	    return $?
     fi
