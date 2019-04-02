@@ -1,14 +1,14 @@
 #!/bin/bash 
 
 TOOLS_DIR=$(dirname $(realpath $BASH_SOURCE))
-configs=$TOOLS_DIR/known_networks
+AUTOSYN_CONF_DIR=$TOOLS_DIR/known_networks
 
 autosyn-network-getCurrent() {  # Me fijo si tengo una configuracion para la red actual
   current=$(ip route show | grep `hostname -I | cut -f1 -d' '` | cut -f1 -d' ')
   
-  for config in `ls $configs`; do
-    if grep -q $current $configs/$config; then
-      source $configs/$config
+  for config in `ls $AUTOSYN_CONF_DIR`; do
+    if grep -q $current $AUTOSYN_CONF_DIR/$config; then
+      source $AUTOSYN_CONF_DIR/$config
       return 0
     fi
   done
@@ -19,10 +19,10 @@ autosyn-network-getCurrent() {  # Me fijo si tengo una configuracion para la red
 autosyn-config-update() {
   # echo "${FUNCNAME[0]}: Actualizando configuración con ip [$1]"
   if autosyn-network-getCurrent; then
-    # echo "${FUNCNAME[0]}: Archivo de configuración [$network_config]"
+    # echo "${FUNCNAME[0]}: Archivo de configuración [$AUTOSYN_NET_CONFIG]"
     if autosyn-host-test $1; then
-    	    # echo "${FUNCNAME[0]}: IP con synergy activo [$server_ip]"
-	    sed -i $network_config -e "s/$server_ip/$1/g"
+    	    # echo "${FUNCNAME[0]}: IP con synergy activo [$AUTOSYN_SERVER_IP]"
+	    sed -i $AUTOSYN_NET_CONFIG -e "s/$AUTOSYN_SERVER_IP/$1/g"
 	    return $?
     fi
   fi

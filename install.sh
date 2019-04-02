@@ -13,4 +13,4 @@ done
 
 sudo cp 90synergy ${DEST}
 sudo sed 's|^USER=.*|USER='"$(whoami)"'|' -i ${DEST}/90synergy
-sudo sed 's|^AUTO_SYNERGY_GIT=.*|AUTO_SYNERGY_GIT='"$(pwd)"'|' -i ${DEST}/90synergy
+sudo sed 's|^AUTOSYN_GIT=.*|AUTOSYN_GIT='"$(pwd)"'|' -i ${DEST}/90synergy

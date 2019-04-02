@@ -12,15 +12,15 @@ if [ "$(pidof synergy)" != "" ] || [ "$(pidof synergyc)" != "" ]; then
 fi
 
 if autosyn-network-getCurrent; then
-  echo "Conozco la red: $network_name"
-  if autosyn-host-test $server_ip; then
-    echo "El ip conocido esta activo: $server_ip"
-    autosyn-host-connect $server_ip
+  echo "Conozco la red: $AUTOSYN_NET_NAME"
+  if autosyn-host-test $AUTOSYN_SERVER_IP; then
+    echo "El ip conocido esta activo: $AUTOSYN_SERVER_IP"
+    autosyn-host-connect $AUTOSYN_SERVER_IP
   else
-    echo "No pude conectarme a la IP que esperaba ($server_ip)"
+    echo "No pude conectarme a la IP que esperaba ($AUTOSYN_SERVER_IP)"
     
     echo "Intentando encontrarla mediante nmap/arp..."
-    ip=$(autosyn-mac2ip $network $server_mac)
+    ip=$(autosyn-mac2ip $AUTOSYN_NET $AUTOSYN_SERVER_MAC)
     
     echo "Encontre: $ip"
     if autosyn-config-update $ip; then

@@ -1,7 +1,7 @@
 #!/bin/bash 
 
 USER=wozhub
-AUTO_SYNERGY_GIT=/home/$user/git/auto-synergy
+AUTOSYN_GIT=/home/$user/git/auto-synergy
 LOG_FILE=/var/log/auto-synergy.log
 
 isLoggedIn() {
@@ -20,4 +20,4 @@ exec 2>&1
 # Me aseguro de que haya iniciado sesion antes de correr el helper
 while ! isLoggedIn ${USER}; do
 	sleep 10
-done && runuser -l ${USER} -c "DISPLAY=$(ps e -u ${USER} | sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | sort -u | head -1); ${AUTO_SYNERGY_GIT}/helper.sh" &
+done && runuser -l ${USER} -c "DISPLAY=$(ps e -u ${USER} | sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | sort -u | head -1); ${AUTOSYN_GIT}/helper.sh" &
