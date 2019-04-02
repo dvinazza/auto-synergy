@@ -21,7 +21,7 @@ autosyn-config-update() {
   # echo "${FUNCNAME[0]}: Actualizando configuración con ip [$1]"
   if autosyn-network-getCurrent; then
     # echo "${FUNCNAME[0]}: Archivo de configuración [$AUTOSYN_NET_CONFIG]"
-    if autosyn-host-test $1; then
+    if autosyn-server-test $1; then
     	    # echo "${FUNCNAME[0]}: IP con synergy activo [$AUTOSYN_SERVER_IP]"
 	    sed -i $AUTOSYN_NET_CONFIG -e "s/$AUTOSYN_SERVER_IP/$1/g"
 	    return $?
@@ -45,26 +45,27 @@ autosyn-arp-getIp() {
   ip n | grep $1 | awk '{print $1}'
 }
 
-autosyn-host-test() { #me fijo si la ip esta encendida y escuchando
+autosyn-client-test() { #me fijo si la ip esta encendida y escuchando
+    local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
     
-    if ! ping $1 -c 1 &>/dev/null; then
+    if ! ping ${AUTOSYN_SERVER_IP} -c 1 &>/dev/null; then
         return 1
     fi  # IP answers ICMP
 
-    if ! nc -z $1 24800 &>/dev/null; then
+    if ! nc -z ${AUTOSYN_SERVER_IP} 24800 &>/dev/null; then
         return 1
     fi  # Port is OPEN
 
     expect << EOF
 log_user 0
-spawn telnet $1 24800
+spawn telnet ${AUTOSYN_SERVER_IP} 24800
 expect -re "Synergy"
 send "exit\r"
 EOF
     return $?
 }
 
-autosyn-host-connect() {
+autosyn-client-connect() {
     local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
 
     # https://askubuntu.com/questions/90234/wrong-keyboard-layout-on-client-pc-when-using-synergy

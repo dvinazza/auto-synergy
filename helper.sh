@@ -19,9 +19,9 @@ if autosyn-network-getCurrent; then
             autosyn-server-start
             ;;
         *)
-            if autosyn-host-test $AUTOSYN_SERVER_IP; then
+            if autosyn-client-test; then
                 echo "El ip conocido esta activo: $AUTOSYN_SERVER_IP"
-                autosyn-host-connect $AUTOSYN_SERVER_IP
+                autosyn-client-connect $AUTOSYN_SERVER_IP
             else
                 echo "No pude conectarme a la IP que esperaba ($AUTOSYN_SERVER_IP)"
 
@@ -30,7 +30,7 @@ if autosyn-network-getCurrent; then
 
                 echo "Encontre: $ip"
                 if autosyn-config-update $ip; then
-                    autosyn-host-connect $ip
+                    autosyn-client-connect $ip
                 fi
             fi
             ;;
