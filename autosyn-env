@@ -1,0 +1,11 @@
+#!/bin/bash
+
+AUTOSYN_DEBUG_LEVEL="DEBUG"
+AUTOSYN_CONF_DIR=$(dirname $(realpath $BASH_SOURCE))/known_networks
+AUTOSYN_LOCK=/run/lock/autosyn
+AUTOSYN_DISPATCHER_LOG=/var/log/autosyn-dispatcher.log
+AUTOSYN_HELPER_LOG=/var/log/autosyn-helper.log
+
+SYNERGY_CLIENT=/usr/bin/synergyc
+SYNERGY_SERVER=/usr/bin/synergys 
+SYNERGY_LOG=/tmp/autosyn.log

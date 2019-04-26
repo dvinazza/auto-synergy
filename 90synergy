@@ -1,8 +1,9 @@
 #!/bin/bash 
 
 USER=wozhub
-AUTOSYN_GIT=/home/$user/git/auto-synergy
-LOG_FILE=/var/log/auto-synergy.log
+AUTOSYN_GIT=/home/${USER}/git/auto-synergy
+
+source $AUTOSYN_GIT/autosyn-env
 
 isLoggedIn() {
   w -s -h | grep -q $1
@@ -18,10 +19,13 @@ fi
 
 # https://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
 # Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
-exec > >(tee -i $log_file)
+exec > >(tee -i ${AUTOSYN_DISPATCHER_LOG})
 exec 2>&1
+
+touch ${AUTOSYN_HELPER_LOG} &&
+sudo chown ${USER} ${AUTOSYN_HELPER_LOG}
 
 # Me aseguro de que haya iniciado sesion antes de correr el helper
 while ! isLoggedIn ${USER}; do
 	sleep 10
-done && runuser -l ${USER} -c "DISPLAY=$(getDisplay ${USER}); ${AUTOSYN_GIT}/helper.sh" &
+done && runuser -l ${USER} -c "DISPLAY=$(getDisplay ${USER}); ${AUTOSYN_GIT}/helper.sh &>/dev/null" &

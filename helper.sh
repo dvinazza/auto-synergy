@@ -1,8 +1,15 @@
-#!/bin/bash -x
+#!/bin/bash
 
-AUTOSYN_DEBUG_LEVEL="DEBUG"
+
 script_dir=$(dirname $(realpath $0))
+
 source $script_dir/synergy-tools
+source $script_dir/autosyn-env
+
+# https://stackoverflow.com/questions/3173131/redirect-copy-of-stdout-to-log-file-from-within-bash-script-itself
+# Redirect stdout ( > ) into a named pipe ( >() ) running "tee"
+exec > >(tee -i ${AUTOSYN_HELPER_LOG})
+exec 2>&1
 
 #me fijo si no esta abierto el synergy (gui) ya
 if [ "$(pidof synergy)" != "" ] || [ "$(pidof synergyc)" != "" ]; then

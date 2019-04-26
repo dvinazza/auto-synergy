@@ -1,11 +1,7 @@
 #!/bin/bash 
 
 TOOLS_DIR=$(dirname $(realpath $BASH_SOURCE))
-AUTOSYN_CONF_DIR=$TOOLS_DIR/known_networks
-AUTOSYN_LOG_FILE=/tmp/autosyn.log
-AUTOSYN_CLIENT_BIN=/usr/bin/synergyc
-AUTOSYN_SERVER_BIN=/usr/bin/synergys 
-AUTOSYN_LOCK=/run/lock/autosyn
+source $TOOLS_DIR/autosyn-env
 
 
 autosyn-network-getCurrent() {  # Me fijo si tengo una configuracion para la red actual
@@ -80,7 +76,7 @@ autosyn-client-connect() {
   AUTOSYN_CMD_OPTS+=" --log ${AUTOSYN_LOG_FILE}"
   AUTOSYN_CMD_OPTS+=" ${AUTOSYN_SERVER_IP}"
   
-  AUTOSYN_CMD="${AUTOSYN_CLIENT_BIN} ${AUTOSYN_CMD_OPTS}"
+  AUTOSYN_CMD="${SYNERGY_CLIENT} ${AUTOSYN_CMD_OPTS}"
 
   flock --nonblock ${AUTOSYN_LOCK}-client -c "${AUTOSYN_CMD}" || echo "$0: Failed to obtain lock"
 
@@ -93,10 +89,10 @@ autosyn-server-start() {
 
   AUTOSYN_CMD_OPTS=""
   AUTOSYN_CMD_OPTS+=" --debug $AUTOSYN_DEBUG_LEVEL"
-  AUTOSYN_CMD_OPTS+=" --log ${AUTOSYN_LOG_FILE}"
+  AUTOSYN_CMD_OPTS+=" --log ${SYNERGY_LOG}"
   AUTOSYN_CMD_OPTS+=" --config ${AUTOSYN_NET_CONFIG}.conf"
   
-  AUTOSYN_CMD="${AUTOSYN_SERVER_BIN} ${AUTOSYN_CMD_OPTS}"
+  AUTOSYN_CMD="${SYNERGY_SERVER} ${AUTOSYN_CMD_OPTS}"
 
   flock --nonblock ${AUTOSYN_LOCK}-server -c "${AUTOSYN_CMD}" || echo "$0: Failed to obtain lock"
 }
