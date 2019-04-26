@@ -2,7 +2,7 @@
 
 DEST=/etc/NetworkManager/dispatcher.d
 
-REQUIRED="expect nc nmap telnet synergyc"
+REQUIRED="expect flock nc nmap telnet synergyc"
 
 for APP in ${REQUIRED}; do
     if ! which ${APP} >/dev/null; then

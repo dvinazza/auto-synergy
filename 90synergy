@@ -8,6 +8,10 @@ isLoggedIn() {
   w -s -h | grep -q $1
 }
 
+getDisplay() {
+  ps e -u $1 | sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | sort -u | head -1
+}
+
 if [ "$2" != "up" ]; then
   exit 0  # nada que hacer
 fi
@@ -20,4 +24,4 @@ exec 2>&1
 # Me aseguro de que haya iniciado sesion antes de correr el helper
 while ! isLoggedIn ${USER}; do
 	sleep 10
-done && runuser -l ${USER} -c "DISPLAY=$(ps e -u ${USER} | sed -rn 's/.* DISPLAY=(:[0-9]*).*/\1/p' | sort -u | head -1); ${AUTOSYN_GIT}/helper.sh" &
+done && runuser -l ${USER} -c "DISPLAY=$(getDisplay ${USER}); ${AUTOSYN_GIT}/helper.sh" &

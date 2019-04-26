@@ -3,6 +3,10 @@
 TOOLS_DIR=$(dirname $(realpath $BASH_SOURCE))
 AUTOSYN_CONF_DIR=$TOOLS_DIR/known_networks
 AUTOSYN_LOG_FILE=/tmp/autosyn.log
+AUTOSYN_CLIENT_BIN=/usr/bin/synergyc
+AUTOSYN_SERVER_BIN=/usr/bin/synergys 
+AUTOSYN_LOCK=/run/lock/autosyn
+
 
 autosyn-network-getCurrent() {  # Me fijo si tengo una configuracion para la red actual
   current=$(ip route show | grep `hostname -I | cut -f1 -d' '` | cut -f1 -d' ')
@@ -22,22 +26,22 @@ autosyn-config-update() {
   if autosyn-network-getCurrent; then
     # echo "${FUNCNAME[0]}: Archivo de configuración [$AUTOSYN_NET_CONFIG]"
     if autosyn-client-test $1; then
-   	    # echo "${FUNCNAME[0]}: IP con synergy activo [$AUTOSYN_SERVER_IP]"
-	    sed -i $AUTOSYN_NET_CONFIG -e "s/$AUTOSYN_SERVER_IP/$1/g"
-	    return $?
+      # echo "${FUNCNAME[0]}: IP con synergy activo [$AUTOSYN_SERVER_IP]"
+      sed -i $AUTOSYN_NET_CONFIG -e "s/$AUTOSYN_SERVER_IP/$1/g"
+      return $?
     fi
   fi
   return 1
 }
 
 autosyn-mac2ip() {
-    ip=$(autosyn-arp-getIp $2)
-    if [ "$ip" != "" ]; then
-        echo $ip
-    else
-	nmap -sP $1 &>/dev/null #escaneo la red para juntar mac address
-        autosyn-arp-getIp $2
-    fi
+  ip=$(autosyn-arp-getIp $2)
+  if [ "$ip" != "" ]; then
+      echo $ip
+  else
+      nmap -sP $1 &>/dev/null #escaneo la red para juntar mac address
+      autosyn-arp-getIp $2
+  fi
 }
 
 autosyn-arp-getIp() {
@@ -46,38 +50,53 @@ autosyn-arp-getIp() {
 }
 
 autosyn-client-test() { #me fijo si la ip esta encendida y escuchando
-    local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
-    
-    if ! ping ${AUTOSYN_SERVER_IP} -c 1 &>/dev/null; then
-        return 1
-    fi  # IP answers ICMP
+  local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
+  
+  if ! ping ${AUTOSYN_SERVER_IP} -c 1 &>/dev/null; then
+    return 1
+  fi  # IP answers ICMP
 
-    if ! nc -z ${AUTOSYN_SERVER_IP} 24800 &>/dev/null; then
-        return 1
-    fi  # Port is OPEN
+  if ! nc -z ${AUTOSYN_SERVER_IP} 24800 &>/dev/null; then
+    return 1
+  fi  # Port is OPEN
 
-    expect << EOF
+  expect << EOF
 log_user 0
 spawn telnet ${AUTOSYN_SERVER_IP} 24800
 expect -re "Synergy"
 send "exit\r"
 EOF
-    return $?
+
+  return $?
 }
 
 autosyn-client-connect() {
-    local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
+  local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
 
-    # https://askubuntu.com/questions/90234/wrong-keyboard-layout-on-client-pc-when-using-synergy
-    . /etc/default/keyboard
-    /usr/bin/synergyc --debug $AUTOSYN_DEBUG_LEVEL --log ${AUTOSYN_LOG_FILE} ${AUTOSYN_SERVER_IP}
-    setxkbmap $XKBLAYOUT -option "$XKBOPTIONS" -model "$XKBMODEL" \
-        -variant "$XKBVARIANT"
+  # https://askubuntu.com/questions/90234/wrong-keyboard-layout-on-client-pc-when-using-synergy
+  . /etc/default/keyboard
+  AUTOSYN_CMD_OPTS=""
+  AUTOSYN_CMD_OPTS+=" --debug $AUTOSYN_DEBUG_LEVEL"
+  AUTOSYN_CMD_OPTS+=" --log ${AUTOSYN_LOG_FILE}"
+  AUTOSYN_CMD_OPTS+=" ${AUTOSYN_SERVER_IP}"
+  
+  AUTOSYN_CMD="${AUTOSYN_CLIENT_BIN} ${AUTOSYN_CMD_OPTS}"
+
+  flock --nonblock ${AUTOSYN_LOCK}-client -c "${AUTOSYN_CMD}" || echo "$0: Failed to obtain lock"
+
+  setxkbmap $XKBLAYOUT -option "$XKBOPTIONS" -model "$XKBMODEL" \
+    -variant "$XKBVARIANT"
 }
 
 autosyn-server-start() {
-    [ -f ${AUTOSYN_NET_CONFIG}.conf ] || echo "${AUTOSYN_NET_CONFIG}.conf not found"
+  [ -f ${AUTOSYN_NET_CONFIG}.conf ] || echo "${AUTOSYN_NET_CONFIG}.conf not found"
 
-    /usr/bin/synergys --debug ${AUTOSYN_DEBUG_LEVEL} --log ${AUTOSYN_LOG_FILE} \
-        --config ${AUTOSYN_NET_CONFIG}.conf
+  AUTOSYN_CMD_OPTS=""
+  AUTOSYN_CMD_OPTS+=" --debug $AUTOSYN_DEBUG_LEVEL"
+  AUTOSYN_CMD_OPTS+=" --log ${AUTOSYN_LOG_FILE}"
+  AUTOSYN_CMD_OPTS+=" --config ${AUTOSYN_NET_CONFIG}.conf"
+  
+  AUTOSYN_CMD="${AUTOSYN_SERVER_BIN} ${AUTOSYN_CMD_OPTS}"
+
+  flock --nonblock ${AUTOSYN_LOCK}-server -c "${AUTOSYN_CMD}" || echo "$0: Failed to obtain lock"
 }
