@@ -73,12 +73,12 @@ autosyn-client-connect() {
   . /etc/default/keyboard
   AUTOSYN_CMD_OPTS=""
   AUTOSYN_CMD_OPTS+=" --debug $AUTOSYN_DEBUG_LEVEL"
-  AUTOSYN_CMD_OPTS+=" --log ${AUTOSYN_LOG_FILE}"
+  AUTOSYN_CMD_OPTS+=" --log ${SYNERGY_LOG}"
   AUTOSYN_CMD_OPTS+=" ${AUTOSYN_SERVER_IP}"
   
   AUTOSYN_CMD="${SYNERGY_CLIENT} ${AUTOSYN_CMD_OPTS}"
 
-  flock --nonblock ${AUTOSYN_LOCK}-client -c "${AUTOSYN_CMD}" || echo "$0: Failed to obtain lock"
+  flock --nonblock ${AUTOSYN_LOCK}-client -c "${AUTOSYN_CMD} || echo [${AUTOSYN_CMD}] FAILED && true"  || echo "$0: Failed to obtain lock"
 
   setxkbmap $XKBLAYOUT -option "$XKBOPTIONS" -model "$XKBMODEL" \
     -variant "$XKBVARIANT"
@@ -93,6 +93,6 @@ autosyn-server-start() {
   AUTOSYN_CMD_OPTS+=" --config ${AUTOSYN_NET_CONFIG}.conf"
   
   AUTOSYN_CMD="${SYNERGY_SERVER} ${AUTOSYN_CMD_OPTS}"
-
-  flock --nonblock ${AUTOSYN_LOCK}-server -c "${AUTOSYN_CMD}" || echo "$0: Failed to obtain lock"
+ FAILED && true
+  flock --nonblock ${AUTOSYN_LOCK}-server -c "${AUTOSYN_CMD} || echo [${AUTOSYN_CMD}] FAILED && true" || echo "$0: Failed to obtain lock"
 }
