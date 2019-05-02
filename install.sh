@@ -12,5 +12,6 @@ for APP in ${REQUIRED}; do
 done
 
 sudo cp 90synergy ${DEST}
+sudo chmod u+x ${DEST}/90synergy
 sudo sed 's|^USER=.*|USER='"$(whoami)"'|' -i ${DEST}/90synergy
 sudo sed 's|^AUTOSYN_GIT=.*|AUTOSYN_GIT='"$(pwd)"'|' -i ${DEST}/90synergy
