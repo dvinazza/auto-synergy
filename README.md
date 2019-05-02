@@ -1,7 +1,5 @@
 # auto-synergy
 
-Script to start a Synergy Client or Server automatically according to current network.
-
 ## Requirements
 
 * synergyc (dah!)
@@ -28,4 +26,5 @@ Script to start a Synergy Client or Server automatically according to current ne
   * [x] Comprobar que las aplicaciones necesarias existan
   * [ ] Comprobar que el gestor de redes sea NetworkManager
 * [ ] Script para agregar redes (modo cliente/servidor) 
+* [ ] Distinguir entre niveles los de verbosidad/logueo del synergy y de los scripts autosyn
 * [ ] CLIENTE: Esperar a que el servidor levante, cualquiera sea su IP

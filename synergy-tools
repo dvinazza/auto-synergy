@@ -77,6 +77,7 @@ autosyn-client-connect() {
   AUTOSYN_CMD_OPTS+=" ${AUTOSYN_SERVER_IP}"
   
   AUTOSYN_CMD="${SYNERGY_CLIENT} ${AUTOSYN_CMD_OPTS}"
+  echo "AUTOSYN_CMD=${AUTOSYN_CMD}"
 
   flock --nonblock ${AUTOSYN_LOCK}-client -c "${AUTOSYN_CMD} || echo [${AUTOSYN_CMD}] FAILED && true"  || echo "$0: Failed to obtain lock"
 
