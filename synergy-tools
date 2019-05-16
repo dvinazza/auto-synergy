@@ -1,64 +1,119 @@
 #!/bin/bash 
 
 TOOLS_DIR=$(dirname $(realpath $BASH_SOURCE))
+# shellcheck source=./autosyn-env
 source $TOOLS_DIR/autosyn-env
 
 
-autosyn-network-getCurrent() {  # Me fijo si tengo una configuracion para la red actual
-  current=$(ip route show | grep `hostname -I | cut -f1 -d' '` | cut -f1 -d' ')
+autosyn::network::getCurrent() {
+  # Check if there is a configuration for current network, if so source it
+  #
+  # Globals:
+  #   AUTOSYN_CONF_DIR   
+  # Arguments:
+  #   None
+  # Returns:
+  #   0: OK
+  #   1: NOTOK 
+
+  # TODO: Buscar una forma más elegante de obtener la red actual
+  local network_current
+  local autosyn_conf_file
+
+  network_current="$(ip route show | grep "$(hostname -I | cut -f1 -d' ')" | cut -f1 -d' ')"
   
-  for AUTOSYN_CONF_FILE in `ls $AUTOSYN_CONF_DIR`; do
-    if grep -q $current $AUTOSYN_CONF_DIR/${AUTOSYN_CONF_FILE}; then
-      source $AUTOSYN_CONF_DIR/${AUTOSYN_CONF_FILE}
-      return 0
+  for autosyn_conf_file in "${AUTOSYN_CONF_DIR}"/*; do
+    if grep -q "${network_current}" "${AUTOSYN_CONF_DIR}/${autosyn_conf_file}"; then
+      # shellcheck source=/dev/null  
+      source "$AUTOSYN_CONF_DIR/${autosyn_conf_file}" && return 0
     fi
   done
 
   return 1
 }
 
-autosyn-config-update() {
+autosyn::config::update() {
+  # Check if there is a configuration for current network, if so source it
+  # Globals:
+  #   AUTOSYN_NET_CONFIG
+  # Arguments:
+  #   1: Probable working AUTOSYN_SERVER_IP 
+  # Returns:
+  #   0: OK
+  #   *: NOTOK 
+
   # echo "${FUNCNAME[0]}: Actualizando configuración con ip [$1]"
-  if autosyn-network-getCurrent; then
+  if autosyn::network::getCurrent; then
     # echo "${FUNCNAME[0]}: Archivo de configuración [$AUTOSYN_NET_CONFIG]"
-    if autosyn-client-test $1; then
+    if autosyn::client::test "$1"; then
       # echo "${FUNCNAME[0]}: IP con synergy activo [$AUTOSYN_SERVER_IP]"
-      sed -i $AUTOSYN_NET_CONFIG -e "s/$AUTOSYN_SERVER_IP/$1/g"
+      sed -i "${AUTOSYN_NET_CONFIG}" -e "s/${AUTOSYN_SERVER_IP}/$1/g"
       return $?
     fi
   fi
   return 1
 }
 
-autosyn-mac2ip() {
-  ip=$(autosyn-arp-getIp $2)
-  if [ "$ip" != "" ]; then
-      echo $ip
+# TODO: separate in a different library
+autosyn::mac2ip() {
+  # Try to map an IP to a given MAC on a given NETWORK
+  # Globals:
+  #   None
+  # Arguments:
+  #   1: Network to map
+  #   2: MAC to search for
+  # Returns:
+  #   None
+
+  local ip
+
+  ip=$(autosyn::arp::getIp "$2")
+  if [ "${ip}" != "" ]; then
+      echo "${ip}"
   else
-      nmap -sP $1 &>/dev/null #escaneo la red para juntar mac address
-      autosyn-arp-getIp $2
+      nmap -sP "$1" &> /dev/null #escaneo la red para juntar mac address
+      autosyn::arp::getIp "$2"
   fi
 }
 
-autosyn-arp-getIp() {
+# TODO: separate in a different library
+# TODO: ensure network interface is correct
+# TODO: return code!
+autosyn::arp::getIp() {
+  # Echoes the IP associated to a MAC in the ARP table
+  # Globals:
+  #   None
+  # Arguments:
+  #   1: MAC to search for
+  # Returns:
+  #   None
+ 
   #arp -a | grep $1 | grep -oP '\(\K[\d|\.]*'
-  ip n | grep $1 | awk '{print $1}'
+  ip n | grep "$1" | awk '{print $1}'
 }
 
-autosyn-client-test() { #me fijo si la ip esta encendida y escuchando
-  local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
+autosyn::client::test() { 
+  # Check if IP is up and running a Synergy server
+  # Globals:
+  #   AUTOSYN_SERVER_IP
+  # Arguments:
+  #   1: autosyn_server_ip 
+  # Returns:
+  #   TODO
+
+  local autosyn_server_ip=${1:-${AUTOSYN_SERVER_IP}}
   
-  if ! ping ${AUTOSYN_SERVER_IP} -c 1 &>/dev/null; then
+  if ! ping "${autosyn_server_ip}" -c 1 &> /dev/null; then
     return 1
   fi  # IP answers ICMP
 
-  if ! nc -z ${AUTOSYN_SERVER_IP} 24800 &>/dev/null; then
+  if ! nc -z "${autosyn_server_ip}" 24800 &> /dev/null; then
     return 1
   fi  # Port is OPEN
 
   expect << EOF
 log_user 0
-spawn telnet ${AUTOSYN_SERVER_IP} 24800
+spawn telnet ${autosyn_server_ip} 24800
 expect -re "Synergy"
 send "exit\r"
 EOF
@@ -66,33 +121,64 @@ EOF
   return $?
 }
 
-autosyn-client-connect() {
-  local AUTOSYN_SERVER_IP=${1:-${AUTOSYN_SERVER_IP}}
+autosyn::client::connect() {
+  # Connect to Synergy server
+  # Globals:
+  #   AUTOSYN_SERVER_IP
+  #   AUTOSYN_DEBUG_LEVEL
+  #   SYNERGY_CLIENT
+  #   AUTOSYN_LOCK
+  #   XKBLAYOUT
+  #   XKBOPTIONS
+  #   XKBMODEL
+  #   XKBVARIANT
+  # Arguments:
+  #   1: autosyn_server_ip 
+  # Returns:
+  #   TODO
+
+  local autosyn_server_ip=${1:-${AUTOSYN_SERVER_IP}}
+  local autosyn_cmd_opts
+  local autosyn_cmd
 
   # https://askubuntu.com/questions/90234/wrong-keyboard-layout-on-client-pc-when-using-synergy
   . /etc/default/keyboard
-  AUTOSYN_CMD_OPTS=""
-  AUTOSYN_CMD_OPTS+=" --debug $AUTOSYN_DEBUG_LEVEL"
-  AUTOSYN_CMD_OPTS+=" --log ${SYNERGY_LOG}"
-  AUTOSYN_CMD_OPTS+=" ${AUTOSYN_SERVER_IP}"
-  
-  AUTOSYN_CMD="${SYNERGY_CLIENT} ${AUTOSYN_CMD_OPTS}"
 
-  flock --nonblock ${AUTOSYN_LOCK}-client -c "${AUTOSYN_CMD} || echo [${AUTOSYN_CMD}] FAILED && true"  || echo "$0: Failed to obtain lock"
+  autosyn_cmd_opts=""
+  autosyn_cmd_opts+=" --debug ${AUTOSYN_DEBUG_LEVEL}"
+  autosyn_cmd_opts+=" --log ${SYNERGY_LOG}"
+  autosyn_cmd_opts+=" ${autosyn_server_ip}"
+  
+  autosyn_cmd="${SYNERGY_CLIENT} ${autosyn_cmd_opts}"
+
+  flock --nonblock ${AUTOSYN_LOCK}-client -c "${autosyn_cmd} || echo [${autosyn_cmd}] FAILED && true"  || echo "$0: Failed to obtain lock"
 
   setxkbmap $XKBLAYOUT -option "$XKBOPTIONS" -model "$XKBMODEL" \
     -variant "$XKBVARIANT"
 }
 
-autosyn-server-start() {
-  [ -f ${AUTOSYN_NET_CONFIG}.conf ] || echo "${AUTOSYN_NET_CONFIG}.conf not found"
+autosyn::server::start() {
+  # Start Synergy server based on ${AUTOSYN_NET_CONFIG}
+  # Globals:
+  #   AUTOSYN_SERVER_IP
+  # Arguments:
+  #   1: autosyn_server_ip 
+  # Returns:
+  #   TODO
 
-  AUTOSYN_CMD_OPTS=""
-  AUTOSYN_CMD_OPTS+=" --debug $AUTOSYN_DEBUG_LEVEL"
-  AUTOSYN_CMD_OPTS+=" --log ${SYNERGY_LOG}"
-  AUTOSYN_CMD_OPTS+=" --config ${AUTOSYN_NET_CONFIG}.conf"
+  [ -f "${AUTOSYN_NET_CONFIG}.conf" ] || echo "${AUTOSYN_NET_CONFIG}.conf not found"
+
+  local autosyn_cmd_opts
+  local autosyn_cmd
+
+  autosyn_cmd_opts=""
+  autosyn_cmd_opts+=" --debug ${AUTOSYN_DEBUG_LEVEL}"
+  autosyn_cmd_opts+=" --log ${SYNERGY_LOG}"
+  autosyn_cmd_opts+=" --config ${AUTOSYN_NET_CONFIG}.conf"
   
-  AUTOSYN_CMD="${SYNERGY_SERVER} ${AUTOSYN_CMD_OPTS}"
- FAILED && true
-  flock --nonblock ${AUTOSYN_LOCK}-server -c "${AUTOSYN_CMD} || echo [${AUTOSYN_CMD}] FAILED && true" || echo "$0: Failed to obtain lock"
+  autosyn_cmd="${SYNERGY_SERVER} ${autosyn_cmd_opts}"
+ 
+  flock --nonblock ${AUTOSYN_LOCK}-server \
+    -c "${autosyn_cmd} || echo [${autosyn_cmd}] FAILED && true" || \
+    echo "$0: Failed to obtain lock"
 }

@@ -1,16 +1,15 @@
 #!/bin/bash
 
-DEST=/etc/NetworkManager/dispatcher.d
+dispatcher_dir=/etc/NetworkManager/dispatcher.d
+required_apps="expect flock nc nmap telnet synergyc"
 
-REQUIRED="expect flock nc nmap telnet synergyc"
-
-for APP in ${REQUIRED}; do
-    if ! which ${APP} >/dev/null; then
-        echo "${APP} missing !"
+for required_app in ${required_apps}; do
+    if ! which "${required_app}" > /dev/null; then
+        echo "${required_app} missing!"
         exit 1
     fi
 done
 
-sudo cp 90synergy ${DEST}
-sudo sed 's|^USER=.*|USER='"$(whoami)"'|' -i ${DEST}/90synergy
-sudo sed 's|^AUTOSYN_GIT=.*|AUTOSYN_GIT='"$(pwd)"'|' -i ${DEST}/90synergy
+sudo cp 90synergy ${dispatcher_dir}
+sudo sed 's|^USER=.*|USER='"$(whoami)"'|' -i ${dispatcher_dir}/90synergy
+sudo sed 's|^AUTOSYN_GIT=.*|AUTOSYN_GIT='"$(pwd)"'|' -i ${dispatcher_dir}/90synergy

@@ -22,6 +22,7 @@ Script to start a Synergy Client or Server automatically according to current ne
 
 ## TODO
 
+* [ ] https://google.github.io/styleguide/shell.xml
 * [ ] Buscar una forma más elegante de obtener la red actual (ver función autosyn-network-getCurrent)
 * [x] Homogeneizar los nombres de las funciones con un sufijo (autosyn-*)
 * [x] Script para instalar automáticamente
