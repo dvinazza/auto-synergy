@@ -23,9 +23,9 @@ autosyn::network::getCurrent() {
   network_current="$(ip route show | grep "$(hostname -I | cut -f1 -d' ')" | cut -f1 -d' ')"
   
   for autosyn_conf_file in "${AUTOSYN_CONF_DIR}"/*; do
-    if grep -q "${network_current}" "${AUTOSYN_CONF_DIR}/${autosyn_conf_file}"; then
+    if grep -q "${network_current}" "${autosyn_conf_file}"; then
       # shellcheck source=/dev/null  
-      source "$AUTOSYN_CONF_DIR/${autosyn_conf_file}" && return 0
+      source "${autosyn_conf_file}" && return 0
     fi
   done
 
