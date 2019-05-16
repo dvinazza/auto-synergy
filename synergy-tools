@@ -150,6 +150,7 @@ autosyn::client::connect() {
   autosyn_cmd_opts+=" ${autosyn_server_ip}"
   
   autosyn_cmd="${SYNERGY_CLIENT} ${autosyn_cmd_opts}"
+  #echo "autosyn_cmd=${autosyn_cmd}"
 
   flock --nonblock ${AUTOSYN_LOCK}-client -c "${autosyn_cmd} || echo [${autosyn_cmd}] FAILED && true"  || echo "$0: Failed to obtain lock"
 
@@ -177,6 +178,7 @@ autosyn::server::start() {
   autosyn_cmd_opts+=" --config ${AUTOSYN_NET_CONFIG}.conf"
   
   autosyn_cmd="${SYNERGY_SERVER} ${autosyn_cmd_opts}"
+  #echo "autosyn_cmd=${autosyn_cmd}"
  
   flock --nonblock ${AUTOSYN_LOCK}-server \
     -c "${autosyn_cmd} || echo [${autosyn_cmd}] FAILED && true" || \
